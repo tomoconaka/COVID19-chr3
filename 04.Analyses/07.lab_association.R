@@ -104,32 +104,3 @@ for(j in c(1)){
 out <- fread("results/worst_EUR_biomarker.results")
 colnames(out) <- c("biomarker", "beta", "se", "pvalue","N","SNP")
 write.table(out, file="results/worst_EUR_biomarker.results", append=F,quote = F, col.names = T, row.names = F, sep="\t")
-
-out <- data.frame(matrix(0,19,6))
-colnames(out) <- c("biomarker", "beta", "se", "pvalue","N","SNP")
-for(i in c(1:19)){
-    df <- data_EUR %>% mutate(time = case_when(!is.na(covid19_test_date) & !is.na(lab_result_date) ~ as.numeric(as.Date(lab_result_date) - as.Date(covid19_test_date)),
-                                               TRUE ~ 0)) %>% filter(time >= -2 & time <= 30) %>% group_by(anonymized_patient_id) %>%
-      mutate_at(vars(c(any_of(blood_values_max[i]))),max,na.rm=T) %>% 
-      ungroup()  %>% 
-      distinct(anonymized_patient_id, .keep_all=TRUE) %>%
-      pivot_longer(c(any_of(blood_values_max[i])))
-    df <- df %>% filter(!is.na(value) & !is.infinite(value))
-    df$value <- log(df$value)
-    df <- df %>% drop_na(value)
-    LM <- glm(as.formula(paste0("value ~ study")), dat=df,family = "gaussian")
-    df$value <- scale(residuals(LM))
-    LM <- glmer(as.formula(paste0("a1 ~ value + age_at_diagnosis + sex + (1 | nation)")), dat=df,family = "binomial")
-    out[i,1] <- blood_values_max[i]
-    out[i,2] <- summary(LM)$coefficient[2,1]
-    out[i,3] <- summary(LM)$coefficient[2,2]
-    out[i,4] <- summary(LM)$coefficient[2,4]
-    out[i,5] <- dim(df[!is.na(df$value),])[1]
-    out[i,6] <- "a1"
-  }
-print(out[order(out$pvalue),])
-write.table(out, file="results/worst_EUR_biomarker_clinical.results", append=T,quote = F, col.names = F, row.names = F, sep="\t")
-
-out <- fread("results/worst_EUR_biomarker_clinical.results")
-colnames(out) <- c("biomarker", "beta", "se", "pvalue","N","SNP")
-write.table(out, file="results/worst_EUR_biomarker_clinical.results", append=F,quote = F, col.names = T, row.names = F, sep="\t")
