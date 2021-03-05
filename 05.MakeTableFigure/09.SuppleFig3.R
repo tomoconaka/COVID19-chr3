@@ -41,7 +41,7 @@ OUT <- OUT %>% mutate(biomarker=case_when(biomarker=="lab_alp" ~ "ALP",
 
 OUT1 <- OUT %>% filter(pvalue.y < 0.05)
 
-png("plots/Figure1C.png", width=900, height = 500)
+png("plots/SuppleFig3.png", width=900, height = 500)
 p <- ggplot(OUT, aes(x=beta.y, xmin=LL.y, xmax=UL.y, y=beta.x,ymin=LL.x, ymax=UL.x)) + 
   theme_classic() +
   scale_alpha_discrete(range = c(1, 0.3),guide = 'none') + 
@@ -49,8 +49,8 @@ p <- ggplot(OUT, aes(x=beta.y, xmin=LL.y, xmax=UL.y, y=beta.x,ymin=LL.x, ymax=UL
   geom_errorbarh(aes(height = 0,alpha=sig),lwd=0.5) + 
   geom_smooth(method='lm',se=FALSE,color="#e4007f",alpha=0.3) + labs(alpha="p<0.05") +
   geom_label_repel(aes(label=biomarker), size=5,color="#0068b7") + 
-  xlab("Coefficients for the associations\nbetween biomarkers and death and severe respiratory failure") + 
-  ylab("Coefficients for the associations\nbetween rs10490770 and biomarkers") +
+  xlab("Coefficients for the associations\nbetween laboratory values and death or severe respiratory failure") + 
+  ylab("Coefficients for the associations\nbetween chr 3 risk allele carrier status \nand laboratory values") +
   theme(plot.title=element_text(size=15),
         axis.text.x=element_text(size=15,face="bold"),
         axis.text.y=element_text(size=15,face="bold"),
@@ -60,3 +60,11 @@ p <- ggplot(OUT, aes(x=beta.y, xmin=LL.y, xmax=UL.y, y=beta.x,ymin=LL.x, ymax=UL
 print(p)
 dev.off()
 
+
+OUT <- OUT %>% select(c("biomarker","beta.y","se.y","pvalue.y","beta.x","se.x","pvalue.x",
+                        "N.x"))
+
+colnames(OUT) <- c("laboratory values", "beta_1", "se_1", "pvalue_1", "beta_2", "se_2", "pvalue_2",
+                   "N")
+
+OUT %>% write.xlsx("results/lab_associations.xlsx", row.names = F)
